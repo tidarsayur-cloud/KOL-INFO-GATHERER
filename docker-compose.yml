@@ -1,0 +1,66 @@
+version: '3.9'
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: kol_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: kol_analytics
+      POSTGRES_USER: kol_user
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-kol_secret}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - '5432:5432'
+    networks:
+      - kol_network
+
+  redis:
+    image: redis:7-alpine
+    container_name: kol_redis
+    restart: unless-stopped
+    volumes:
+      - redis_data:/data
+    ports:
+      - '6379:6379'
+    networks:
+      - kol_network
+
+  api:
+    build:
+      context: ./apps/api
+      dockerfile: Dockerfile
+    container_name: kol_api
+    restart: unless-stopped
+    env_file: .env
+    ports:
+      - '4000:4000'
+    depends_on:
+      - postgres
+      - redis
+    networks:
+      - kol_network
+
+  web:
+    build:
+      context: ./apps/web
+      dockerfile: Dockerfile
+    container_name: kol_web
+    restart: unless-stopped
+    environment:
+      NEXT_PUBLIC_API_URL: http://api:4000
+    ports:
+      - '3000:3000'
+    depends_on:
+      - api
+    networks:
+      - kol_network
+
+volumes:
+  postgres_data:
+  redis_data:
+
+networks:
+  kol_network:
+    driver: bridge
