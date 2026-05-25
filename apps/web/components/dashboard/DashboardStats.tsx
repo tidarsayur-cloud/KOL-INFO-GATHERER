@@ -3,8 +3,15 @@
 import { motion } from 'framer-motion';
 import { Users, TrendingUp, Star, Activity } from 'lucide-react';
 
+const DEFAULT_STATS = {
+  totalInfluencers: 1284,
+  avgEngagement: 6.8,
+  topTierCount: 47,
+  syncedToday: 312,
+};
+
 interface DashboardStatsProps {
-  stats: {
+  stats?: {
     totalInfluencers: number;
     avgEngagement: number;
     topTierCount: number;
@@ -12,7 +19,7 @@ interface DashboardStatsProps {
   };
 }
 
-export function DashboardStats({ stats }: DashboardStatsProps) {
+export function DashboardStats({ stats = DEFAULT_STATS }: DashboardStatsProps) {
   const items = [
     {
       label: 'Total Influencers',
@@ -45,24 +52,23 @@ export function DashboardStats({ stats }: DashboardStatsProps) {
   ];
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-      {items.map((item, i) => (
+    <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      {items.map((item, index) => (
         <motion.div
           key={item.label}
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: i * 0.1 }}
-          className="glass rounded-2xl p-6 relative overflow-hidden group hover:scale-105 transition-transform"
+          transition={{ delay: index * 0.1 }}
+          className="bg-gray-900 border border-gray-800 rounded-xl p-5"
         >
-          <div className={`absolute inset-0 bg-gradient-to-br ${item.color} opacity-5 group-hover:opacity-10 transition-opacity`} />
-          <div className="relative z-10">
-            <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${item.color} flex items-center justify-center mb-4`}>
+          <div className="flex items-center justify-between mb-3">
+            <div className={`w-10 h-10 rounded-lg bg-gradient-to-br ${item.color} flex items-center justify-center`}>
               <item.icon className="w-5 h-5 text-white" />
             </div>
-            <div className="text-3xl font-bold text-white mb-1">{item.value}</div>
-            <div className="text-sm text-gray-400 mb-2">{item.label}</div>
-            <div className="text-xs text-green-400 font-medium">{item.change} this week</div>
+            <span className="text-xs text-green-400 font-medium">{item.change}</span>
           </div>
+          <p className="text-2xl font-bold text-white">{item.value}</p>
+          <p className="text-gray-500 text-sm mt-1">{item.label}</p>
         </motion.div>
       ))}
     </div>
