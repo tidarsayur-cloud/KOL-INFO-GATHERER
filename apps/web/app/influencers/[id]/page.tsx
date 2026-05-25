@@ -1,189 +1,62 @@
-'use client';
-
-import { useEffect, useState } from 'react';
-import { useParams, useRouter } from 'next/navigation';
-import { motion } from 'framer-motion';
-import { ArrowLeft, Users, TrendingUp, Heart, Play, ExternalLink } from 'lucide-react';
+import { TierBadge } from '@/components/dashboard/TierBadge';
 import { EngagementChart } from '@/components/charts/EngagementChart';
 import { GrowthChart } from '@/components/charts/GrowthChart';
-import { SocialEmbed } from '@/components/embeds/SocialEmbed';
-import { TierBadge } from '@/components/dashboard/TierBadge';
-import { fetchInfluencer } from '@/lib/api';
-import type { Influencer } from '@/types';
 
-export default function InfluencerDetailPage() {
-  const params = useParams();
-  const router = useRouter();
-  const [influencer, setInfluencer] = useState<Influencer | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'overview' | 'analytics' | 'posts'>('overview');
+const MOCK_INFLUENCERS = [
+  { id: '1', name: 'Awkarin', handle: '@awkarin', platform: 'TikTok', followers: 12500000, engagement: 8.2, tier: 'mega', niche: 'Lifestyle', bio: 'Content creator & entrepreneur from Indonesia.' },
+  { id: '2', name: 'Ria Ricis', handle: '@riaricis', platform: 'YouTube', followers: 32000000, engagement: 5.4, tier: 'mega', niche: 'Entertainment', bio: 'Top YouTube creator in Indonesia.' },
+  { id: '3', name: 'Rachel Vennya', handle: '@rachelvennya', platform: 'Instagram', followers: 8700000, engagement: 6.1, tier: 'mega', niche: 'Fashion', bio: 'Fashion influencer & entrepreneur.' },
+  { id: '4', name: 'Deddy Corbuzier', handle: '@deddycorbuzier', platform: 'YouTube', followers: 20000000, engagement: 4.8, tier: 'mega', niche: 'Talk Show', bio: 'Podcast & YouTube creator.' },
+  { id: '5', name: 'Raditya Dika', handle: '@radityadika', platform: 'TikTok', followers: 15000000, engagement: 7.3, tier: 'mega', niche: 'Comedy', bio: 'Comedian, author, and filmmaker.' },
+];
 
-  useEffect(() => {
-    if (params.id) {
-      fetchInfluencer(params.id as string)
-        .then(setInfluencer)
-        .catch(console.error)
-        .finally(() => setLoading(false));
-    }
-  }, [params.id]);
+export async function generateStaticParams() {
+  return MOCK_INFLUENCERS.map((inf) => ({ id: inf.id }));
+}
 
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-gray-950 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-500" />
-      </div>
-    );
-  }
-
-  if (!influencer) {
-    return (
-      <div className="min-h-screen bg-gray-950 flex items-center justify-center">
-        <div className="text-center">
-          <h2 className="text-2xl font-bold text-white mb-4">Influencer Not Found</h2>
-          <button onClick={() => router.back()} className="btn-primary">Go Back</button>
-        </div>
-      </div>
-    );
-  }
-
-  const stats = [
-    { label: 'Followers', value: influencer.followers_count?.toLocaleString(), icon: Users, color: 'text-blue-400' },
-    { label: 'Avg Views', value: influencer.avg_views?.toLocaleString(), icon: Play, color: 'text-green-400' },
-    { label: 'Engagement', value: `${influencer.engagement_rate?.toFixed(2)}%`, icon: Heart, color: 'text-pink-400' },
-    { label: 'Growth', value: `+${influencer.growth_rate?.toFixed(1)}%`, icon: TrendingUp, color: 'text-purple-400' },
-  ];
+export default function InfluencerDetailPage({ params }: { params: { id: string } }) {
+  const influencer = MOCK_INFLUENCERS.find((i) => i.id === params.id) || MOCK_INFLUENCERS[0];
 
   return (
-    <div className="min-h-screen bg-gray-950">
+    <div className="p-6 space-y-6">
       {/* Header */}
-      <div className="relative h-64 bg-gradient-to-br from-purple-900/50 to-blue-900/50 overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-t from-gray-950 to-transparent" />
-        <div className="absolute top-6 left-6">
-          <button
-            onClick={() => router.back()}
-            className="flex items-center gap-2 text-gray-300 hover:text-white transition-colors glass px-4 py-2 rounded-lg"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            Back
-          </button>
+      <div className="flex items-center gap-4">
+        <div className="w-16 h-16 rounded-full bg-gradient-to-r from-purple-500 to-pink-500 flex items-center justify-center text-white text-2xl font-bold">
+          {influencer.name[0]}
+        </div>
+        <div>
+          <h1 className="text-2xl font-bold text-white">{influencer.name}</h1>
+          <p className="text-gray-400">{influencer.handle} &middot; {influencer.platform}</p>
+          <TierBadge tier={influencer.tier} />
         </div>
       </div>
 
-      <div className="max-w-6xl mx-auto px-6 -mt-20 relative z-10">
-        {/* Profile Header */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="flex items-end gap-6 mb-8"
-        >
-          <div className="w-32 h-32 rounded-2xl bg-gradient-to-br from-purple-500 to-blue-600 flex items-center justify-center text-4xl font-bold text-white shadow-2xl border-4 border-gray-950">
-            {influencer.username?.[0]?.toUpperCase()}
-          </div>
-          <div className="pb-2">
-            <div className="flex items-center gap-3 mb-2">
-              <h1 className="text-3xl font-bold text-white">{influencer.display_name || influencer.username}</h1>
-              <TierBadge tier={influencer.tier} />
-            </div>
-            <p className="text-gray-400">@{influencer.username} · {influencer.platform}</p>
-            {influencer.niche && (
-              <span className="mt-2 inline-block px-3 py-1 bg-purple-500/20 text-purple-300 rounded-full text-sm">
-                {influencer.niche}
-              </span>
-            )}
-          </div>
-          {influencer.profile_url && (
-            <a
-              href={influencer.profile_url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="ml-auto flex items-center gap-2 glass px-4 py-2 rounded-lg text-gray-300 hover:text-white transition-colors"
-            >
-              <ExternalLink className="w-4 h-4" />
-              View Profile
-            </a>
-          )}
-        </motion.div>
-
-        {/* Stats Grid */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-          {stats.map((stat, i) => (
-            <motion.div
-              key={stat.label}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: i * 0.1 }}
-              className="glass rounded-xl p-4"
-            >
-              <stat.icon className={`w-5 h-5 ${stat.color} mb-2`} />
-              <div className="text-2xl font-bold text-white">{stat.value ?? '—'}</div>
-              <div className="text-sm text-gray-400">{stat.label}</div>
-            </motion.div>
-          ))}
+      {/* Stats */}
+      <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+        <div className="bg-gray-900 rounded-xl p-4 border border-gray-800">
+          <p className="text-gray-500 text-sm">Followers</p>
+          <p className="text-white text-xl font-bold">{(influencer.followers / 1000000).toFixed(1)}M</p>
         </div>
-
-        {/* Tabs */}
-        <div className="flex gap-1 mb-6 glass rounded-xl p-1 w-fit">
-          {(['overview', 'analytics', 'posts'] as const).map((tab) => (
-            <button
-              key={tab}
-              onClick={() => setActiveTab(tab)}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all capitalize ${
-                activeTab === tab
-                  ? 'bg-purple-600 text-white'
-                  : 'text-gray-400 hover:text-white'
-              }`}
-            >
-              {tab}
-            </button>
-          ))}
+        <div className="bg-gray-900 rounded-xl p-4 border border-gray-800">
+          <p className="text-gray-500 text-sm">Engagement</p>
+          <p className="text-green-400 text-xl font-bold">{influencer.engagement}%</p>
         </div>
+        <div className="bg-gray-900 rounded-xl p-4 border border-gray-800">
+          <p className="text-gray-500 text-sm">Niche</p>
+          <p className="text-white text-xl font-bold">{influencer.niche}</p>
+        </div>
+      </div>
 
-        {/* Tab Content */}
-        <motion.div
-          key={activeTab}
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          className="pb-12"
-        >
-          {activeTab === 'overview' && (
-            <div className="grid md:grid-cols-2 gap-6">
-              <div className="glass rounded-xl p-6">
-                <h3 className="text-lg font-semibold text-white mb-4">Engagement Rate</h3>
-                <EngagementChart influencerId={influencer.id} />
-              </div>
-              <div className="glass rounded-xl p-6">
-                <h3 className="text-lg font-semibold text-white mb-4">Follower Growth</h3>
-                <GrowthChart influencerId={influencer.id} />
-              </div>
-              {influencer.bio && (
-                <div className="glass rounded-xl p-6 md:col-span-2">
-                  <h3 className="text-lg font-semibold text-white mb-2">About</h3>
-                  <p className="text-gray-400">{influencer.bio}</p>
-                </div>
-              )}
-            </div>
-          )}
+      {/* Bio */}
+      <div className="bg-gray-900 rounded-xl p-5 border border-gray-800">
+        <h2 className="text-white font-semibold mb-2">About</h2>
+        <p className="text-gray-400">{influencer.bio}</p>
+      </div>
 
-          {activeTab === 'analytics' && (
-            <div className="space-y-6">
-              <div className="glass rounded-xl p-6">
-                <h3 className="text-lg font-semibold text-white mb-4">Performance Analytics</h3>
-                <GrowthChart influencerId={influencer.id} />
-              </div>
-            </div>
-          )}
-
-          {activeTab === 'posts' && (
-            <div className="glass rounded-xl p-6">
-              <h3 className="text-lg font-semibold text-white mb-4">Recent Posts</h3>
-              {influencer.embed_url ? (
-                <SocialEmbed url={influencer.embed_url} platform={influencer.platform} />
-              ) : (
-                <p className="text-gray-400">No embedded content available.</p>
-              )}
-            </div>
-          )}
-        </motion.div>
+      {/* Charts */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <EngagementChart influencerId={influencer.id} />
+        <GrowthChart influencerId={influencer.id} />
       </div>
     </div>
   );
